@@ -172,6 +172,7 @@ const ModalizeBase = (
     .current;
 
   const tapGestureModalizeRef = React.useRef<TapGestureHandler>(null);
+  console.log('⛔⛔⛔ ~ file: index.tsx:175 ~ tapGestureModalizeRef: ⛳', tapGestureModalizeRef);
   const panGestureChildrenRef = React.useRef<PanGestureHandler>(null);
   const nativeViewChildrenRef = React.useRef<NativeViewGestureHandler>(null);
   const contentViewRef = React.useRef<ScrollView | FlatList<any> | SectionList<any>>(null);
