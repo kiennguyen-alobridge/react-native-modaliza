@@ -172,7 +172,6 @@ const ModalizeBase = (
     .current;
 
   const tapGestureModalizeRef = React.useRef<TapGestureHandler>(null);
-  console.log('⛔⛔⛔ ~ file: index.tsx:175 ~ tapGestureModalizeRef: ⛳', tapGestureModalizeRef);
   const panGestureChildrenRef = React.useRef<PanGestureHandler>(null);
   const nativeViewChildrenRef = React.useRef<NativeViewGestureHandler>(null);
   const contentViewRef = React.useRef<ScrollView | FlatList<any> | SectionList<any>>(null);
@@ -822,6 +821,7 @@ const ModalizeBase = (
               ref={tapGestureOverlayRef}
               enabled={closeOnOverlayTap !== undefined ? closeOnOverlayTap : panGestureEnabled}
               onHandlerStateChange={handleOverlay}
+              onGestureEvent={y => console.log('==========', y)}
             >
               <Animated.View
                 style={[
@@ -956,6 +956,9 @@ const ModalizeBase = (
         maxDurationMs={tapGestureEnabled ? 100000 : 50}
         maxDeltaY={lastSnap}
         enabled={panGestureEnabled}
+        onGestureEvent={() => {
+          console.log('1232132131123');
+        }}
       >
         <View style={s.modalize__wrapper} pointerEvents="box-none">
           {showContent && (
