@@ -161,7 +161,12 @@ const ModalizeBase = (
   const [modalPosition, setModalPosition] = React.useState<TPosition>('initial');
   const [cancelClose, setCancelClose] = React.useState(false);
   const [layouts, setLayouts] = React.useState<Map<string, number>>(new Map());
-
+  const [hideFloating, setHideFloating] = React.useState(false);
+  React.useEffect(() => {
+    if (modalPosition !== 'initial') {
+      setHideFloating(false);
+    }
+  }, [modalPosition]);
   const cancelTranslateY = React.useRef(new Animated.Value(1)).current; // 1 by default to have the translateY animation running
   const componentTranslateY = React.useRef(new Animated.Value(0)).current;
   const overlay = React.useRef(new Animated.Value(0)).current;
@@ -630,6 +635,13 @@ const ModalizeBase = (
   const handleGestureEvent = Animated.event([{ nativeEvent: { translationY: dragY } }], {
     useNativeDriver: USE_NATIVE_DRIVER,
     listener: ({ nativeEvent: { translationY } }: PanGestureHandlerStateChangeEvent) => {
+      if (modalPosition === 'initial') {
+        if (translationY > 0) {
+          setHideFloating(true);
+        } else {
+          setHideFloating(false);
+        }
+      }
       if (panGestureAnimatedValue) {
         const offset = alwaysOpen ?? snapPoint ?? 0;
         const diff = Math.abs(translationY / (endHeight - offset));
@@ -967,7 +979,31 @@ const ModalizeBase = (
               {renderComponent(HeaderComponent, 'header')}
               {renderChildren()}
               {renderComponent(FooterComponent, 'footer')}
+              {hideFloating && modalPosition === 'initial' && (
+                <Animated.View
+                  style={{
+                    height: 100,
+                    backgroundColor: 'green',
+                    width: '100%',
+                    top: snapPoint - 100,
+                    position: 'absolute',
+                    zIndex: 100,
+                  }}
+                />
+              )}
             </AnimatedKeyboardAvoidingView>
+          )}
+          {!hideFloating && (
+            <Animated.View
+              style={{
+                height: 100,
+                backgroundColor: 'green',
+                width: '100%',
+                position: 'absolute',
+                bottom: 0,
+                zIndex: 100,
+              }}
+            />
           )}
 
           {withOverlay && renderOverlay()}
