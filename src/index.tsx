@@ -985,7 +985,7 @@ const ModalizeBase = (
                     height: 100,
                     backgroundColor: 'green',
                     width: '100%',
-                    top: snapPoint - 100,
+                    top:snapPoint? snapPoint - 100 :0,
                     position: 'absolute',
                     zIndex: 100,
                   }}
