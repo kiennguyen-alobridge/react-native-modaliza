@@ -125,6 +125,7 @@ const ModalizeBase = (
     HeaderComponent,
     FooterComponent,
     FloatingComponent,
+    FloatingFooterComponent,
 
     // Callbacks
     onOpen,
@@ -161,6 +162,8 @@ const ModalizeBase = (
   const [modalPosition, setModalPosition] = React.useState<TPosition>('initial');
   const [cancelClose, setCancelClose] = React.useState(false);
   const [layouts, setLayouts] = React.useState<Map<string, number>>(new Map());
+  const [hideFloating, setHideFloating] = React.useState<boolean>(false);
+  const [touchY, setTouchY] = React.useState(0);
 
   const cancelTranslateY = React.useRef(new Animated.Value(1)).current; // 1 by default to have the translateY animation running
   const componentTranslateY = React.useRef(new Animated.Value(0)).current;
@@ -194,6 +197,11 @@ const ModalizeBase = (
   );
 
   let willCloseModalize = false;
+  React.useEffect(() => {
+    if (modalPosition !== 'initial') {
+      setHideFloating(false);
+    }
+  }, [modalPosition]);
 
   const handleBackPress = (): boolean => {
     if (alwaysOpen) {
@@ -309,9 +317,11 @@ const ModalizeBase = (
     const { timing, spring } = closeAnimationConfig;
     const lastSnapValue = snapPoint ? snaps[1] : 80;
     const toInitialAlwaysOpen = dest === 'alwaysOpen' && Boolean(alwaysOpen);
+    if (!toInitialAlwaysOpen) {
+      setHideFloating(true);
+    }
     const toValue =
       toInitialAlwaysOpen && alwaysOpen ? (modalHeightValue || 0) - alwaysOpen : screenHeight;
-
     backButtonListenerRef.current?.remove();
     cancelTranslateY.setValue(1);
     setBeginScrollYValue(0);
@@ -440,7 +450,6 @@ const ModalizeBase = (
     if (onClose) {
       onClose();
     }
-
     handleAnimateClose(dest, callback);
   };
 
@@ -527,6 +536,7 @@ const ModalizeBase = (
               if (snap === endHeight) {
                 destSnapPoint = snap;
                 willCloseModalize = true;
+                setHideFloating(true);
                 handleClose();
               }
             } else {
@@ -630,6 +640,18 @@ const ModalizeBase = (
   const handleGestureEvent = Animated.event([{ nativeEvent: { translationY: dragY } }], {
     useNativeDriver: USE_NATIVE_DRIVER,
     listener: ({ nativeEvent: { translationY } }: PanGestureHandlerStateChangeEvent) => {
+      if (snapPoint && translationY + touchY > fullHeight - snapPoint) {
+        setHideFloating(true);
+      } else {
+        setHideFloating(false);
+      }
+      if (modalPosition === 'initial') {
+        if (translationY > 0) {
+          setHideFloating(true);
+        } else {
+          setHideFloating(false);
+        }
+      }
       if (panGestureAnimatedValue) {
         const offset = alwaysOpen ?? snapPoint ?? 0;
         const diff = Math.abs(translationY / (endHeight - offset));
@@ -789,6 +811,11 @@ const ModalizeBase = (
         activeOffsetY={ACTIVATED}
         activeOffsetX={ACTIVATED}
         onHandlerStateChange={handleChildren}
+        onEnded={() => {
+          if (modalPosition && modalPosition === 'top') {
+            setHideFloating(false);
+          }
+        }}
       >
         <Animated.View style={[style, childrenStyle]}>
           <NativeViewGestureHandler
@@ -955,6 +982,7 @@ const ModalizeBase = (
         maxDurationMs={tapGestureEnabled ? 100000 : 50}
         maxDeltaY={lastSnap}
         enabled={panGestureEnabled}
+        onBegan={e => setTouchY(Number(e.nativeEvent?.y || 0))}
       >
         <View style={s.modalize__wrapper} pointerEvents="box-none">
           {showContent && (
@@ -963,7 +991,33 @@ const ModalizeBase = (
               {renderComponent(HeaderComponent, 'header')}
               {renderChildren()}
               {renderComponent(FooterComponent, 'footer')}
+              {hideFloating && (
+                <View
+                  style={{
+                    height: 50,
+                    width: '100%',
+                    top: snapPoint ? snapPoint - 50 : 0,
+                    position: 'absolute',
+                    zIndex: 100,
+                  }}
+                >
+                  {FloatingFooterComponent && FloatingFooterComponent()}
+                </View>
+              )}
             </AnimatedKeyboardAvoidingView>
+          )}
+          {!hideFloating && (
+            <View
+              style={{
+                height: 50,
+                width: '100%',
+                position: 'absolute',
+                bottom: 0,
+                zIndex: 100,
+              }}
+            >
+              {FloatingFooterComponent && FloatingFooterComponent()}
+            </View>
           )}
 
           {withOverlay && renderOverlay()}
