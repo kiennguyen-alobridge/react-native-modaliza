@@ -103,11 +103,11 @@ const ModalizeBase = (
 
     // Animations
     openAnimationConfig = {
-      timing: { duration: 1240, easing: Easing.ease },
+      timing: { duration: 240, easing: Easing.ease },
       spring: { speed: 14, bounciness: 4 },
     },
     closeAnimationConfig = {
-      timing: { duration: 1240, easing: Easing.ease },
+      timing: { duration: 240, easing: Easing.ease },
     },
     dragToss = 0.18,
     threshold = 120,
