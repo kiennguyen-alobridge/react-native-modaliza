@@ -162,9 +162,13 @@ const ModalizeBase = (
   const [modalPosition, setModalPosition] = React.useState<TPosition>('initial');
   const [cancelClose, setCancelClose] = React.useState(false);
   const [layouts, setLayouts] = React.useState<Map<string, number>>(new Map());
-  const [hideFloating, setHideFloating] = React.useState<boolean>(true);
-  const [heightFloating, setHeightFloating] = React.useState<number>(0);
-
+  const [canDragFloatingFooter, setCanDragFloatingFooter] = React.useState<boolean>(false);
+  const [heightFloatingFooter, setHeightFloatingFooter] = React.useState<number>(0);
+  React.useEffect(() => {
+    if (heightFloatingFooter != 0) {
+      setCanDragFloatingFooter(true);
+    }
+  }, [heightFloatingFooter]);
   const cancelTranslateY = React.useRef(new Animated.Value(1)).current; // 1 by default to have the translateY animation running
   const componentTranslateY = React.useRef(new Animated.Value(0)).current;
   const overlay = React.useRef(new Animated.Value(0)).current;
@@ -199,7 +203,7 @@ const ModalizeBase = (
   let willCloseModalize = false;
   React.useEffect(() => {
     if (modalPosition !== 'initial') {
-      setHideFloating(false);
+      setCanDragFloatingFooter(false);
     }
   }, [modalPosition]);
 
@@ -317,7 +321,7 @@ const ModalizeBase = (
     const toInitialAlwaysOpen = dest === 'alwaysOpen' && Boolean(alwaysOpen);
     if (!toInitialAlwaysOpen) {
       setTimeout(() => {
-        setHideFloating(true);
+        setCanDragFloatingFooter(true);
       }, 140);
     }
     const toValue =
@@ -392,7 +396,6 @@ const ModalizeBase = (
           default: 0,
         }),
     );
-    console.log('handleModalizeContentLayout');
     setModalHeightValue(value);
   };
 
@@ -406,7 +409,6 @@ const ModalizeBase = (
     const maxFixed = +max.toFixed(3);
     const endHeightFixed = +endHeight.toFixed(3);
     const shorterHeight = maxFixed < endHeightFixed;
-    console.log('handleBaseLayout');
     setDisableScroll(shorterHeight && disableScrollIfPossible);
   };
 
@@ -425,7 +427,6 @@ const ModalizeBase = (
     if (!adjustToContentHeight) {
       return;
     }
-    console.log('handleContentLayout');
     handleBaseLayout('content', nativeEvent.layout.height);
   };
 
@@ -442,7 +443,6 @@ const ModalizeBase = (
     if (!adjustToContentHeight || absolute) {
       return;
     }
-    console.log('handleComponentLayout');
     handleBaseLayout(name, nativeEvent.layout.height);
   };
 
@@ -450,8 +450,6 @@ const ModalizeBase = (
     if (onClose) {
       onClose();
     }
-    console.log('handleClose');
-
     handleAnimateClose(dest, callback);
   };
 
@@ -474,8 +472,6 @@ const ModalizeBase = (
     if (type !== 'component' && (cancelTranslateY as any)._value === 0) {
       componentTranslateY.setValue(0);
     }
-    // console.log('nativeEvent=======',nativeEvent.absoluteY-nativeEvent.y, fullHeight-snapPoint)
-
     /*
      * When the pan gesture began we check the position of the ScrollView "cursor".
      * We cancel the translation animation if the ScrollView is not scrolled to the top
@@ -538,7 +534,7 @@ const ModalizeBase = (
               if (snap === endHeight) {
                 destSnapPoint = snap;
                 willCloseModalize = true;
-                setHideFloating(true);
+                setCanDragFloatingFooter(true);
                 handleClose();
               }
             } else {
@@ -646,15 +642,15 @@ const ModalizeBase = (
     }: PanGestureHandlerStateChangeEvent) => {
       if (modalPosition === 'initial') {
         if (translationY > 0) {
-          setHideFloating(true);
+          setCanDragFloatingFooter(true);
         } else {
-          setHideFloating(false);
+          setCanDragFloatingFooter(false);
         }
       } else {
         if (snapPoint && absoluteY - y > fullHeight - snapPoint) {
-          setHideFloating(true);
+          setCanDragFloatingFooter(true);
         } else {
-          setHideFloating(false);
+          setCanDragFloatingFooter(false);
         }
       }
       if (panGestureAnimatedValue) {
@@ -817,7 +813,7 @@ const ModalizeBase = (
         activeOffsetX={ACTIVATED}
         onHandlerStateChange={handleChildren}
         onEnded={() => {
-          setHideFloating(false);
+          setCanDragFloatingFooter(false);
         }}
       >
         <Animated.View style={[style, childrenStyle]}>
@@ -982,12 +978,12 @@ const ModalizeBase = (
         e.nativeEvent &&
         e.nativeEvent.layout &&
         e.nativeEvent.layout.height &&
-        heightFloating === 0
+        heightFloatingFooter === 0
       ) {
-        setHeightFloating(e.nativeEvent.layout.height);
+        setHeightFloatingFooter(e.nativeEvent.layout.height);
       }
     },
-    [heightFloating],
+    [heightFloatingFooter],
   );
 
   const renderModalize = (
@@ -1008,11 +1004,11 @@ const ModalizeBase = (
               {renderComponent(HeaderComponent, 'header')}
               {renderChildren()}
               {renderComponent(FooterComponent, 'footer')}
-              {hideFloating && (
+              {canDragFloatingFooter && (
                 <View
                   style={{
                     width: '100%',
-                    top: snapPoint ? snapPoint - heightFloating : 0,
+                    top: snapPoint ? snapPoint - heightFloatingFooter : 0,
                     position: 'absolute',
                     zIndex: 100,
                   }}
@@ -1022,7 +1018,7 @@ const ModalizeBase = (
               )}
             </AnimatedKeyboardAvoidingView>
           )}
-          {!hideFloating && (
+          {!canDragFloatingFooter && (
             <View
               onLayout={setHeightFloat}
               style={{
