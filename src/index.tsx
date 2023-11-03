@@ -316,7 +316,9 @@ const ModalizeBase = (
     const lastSnapValue = snapPoint ? snaps[1] : 80;
     const toInitialAlwaysOpen = dest === 'alwaysOpen' && Boolean(alwaysOpen);
     if (!toInitialAlwaysOpen) {
-      setHideFloating(true);
+      setTimeout(() => {
+        setHideFloating(true);
+      }, 140);
     }
     const toValue =
       toInitialAlwaysOpen && alwaysOpen ? (modalHeightValue || 0) - alwaysOpen : screenHeight;
@@ -390,7 +392,7 @@ const ModalizeBase = (
           default: 0,
         }),
     );
-    console.log('handleModalizeContentLayout');
+    console.log('handleModalizeContentLayout')
     setModalHeightValue(value);
   };
 
@@ -404,7 +406,7 @@ const ModalizeBase = (
     const maxFixed = +max.toFixed(3);
     const endHeightFixed = +endHeight.toFixed(3);
     const shorterHeight = maxFixed < endHeightFixed;
-    console.log('handleBaseLayout');
+    console.log('handleBaseLayout')
     setDisableScroll(shorterHeight && disableScrollIfPossible);
   };
 
@@ -423,7 +425,7 @@ const ModalizeBase = (
     if (!adjustToContentHeight) {
       return;
     }
-    console.log('handleContentLayout');
+    console.log('handleContentLayout')
     handleBaseLayout('content', nativeEvent.layout.height);
   };
 
@@ -440,7 +442,7 @@ const ModalizeBase = (
     if (!adjustToContentHeight || absolute) {
       return;
     }
-    console.log('handleComponentLayout');
+    console.log('handleComponentLayout')
     handleBaseLayout(name, nativeEvent.layout.height);
   };
 
@@ -448,7 +450,7 @@ const ModalizeBase = (
     if (onClose) {
       onClose();
     }
-    console.log('handleClose');
+    console.log('handleClose')
 
     handleAnimateClose(dest, callback);
   };
@@ -639,16 +641,16 @@ const ModalizeBase = (
 
   const handleGestureEvent = Animated.event([{ nativeEvent: { translationY: dragY } }], {
     useNativeDriver: USE_NATIVE_DRIVER,
-    listener: ({
-      nativeEvent: { translationY, y, absoluteY },
-    }: PanGestureHandlerStateChangeEvent) => {
-      if (snapPoint && absoluteY - y > fullHeight - snapPoint) {
-        setHideFloating(true);
-      } else {
-        setHideFloating(false);
-      }
+    listener: ({ nativeEvent: { translationY, y,absoluteY } }: PanGestureHandlerStateChangeEvent) => {
+      
       if (modalPosition === 'initial') {
         if (translationY > 0) {
+          setHideFloating(true);
+        } else {
+          setHideFloating(false);
+        }
+      }else{
+        if (snapPoint && absoluteY-y > fullHeight - snapPoint) {
           setHideFloating(true);
         } else {
           setHideFloating(false);
@@ -974,20 +976,11 @@ const ModalizeBase = (
     keyboardAvoidingViewProps.onLayout = handleModalizeContentLayout;
   }
 
-  const setHeightFloat = React.useCallback(
-    (e: LayoutChangeEvent) => {
-      if (
-        e &&
-        e.nativeEvent &&
-        e.nativeEvent.layout &&
-        e.nativeEvent.layout.height &&
-        heightFloating === 0
-      ) {
-        setHeightFloating(e.nativeEvent.layout.height);
-      }
-    },
-    [heightFloating],
-  );
+ const setHeightFloat =  React.useCallback((e: LayoutChangeEvent) => {
+  if(e && e.nativeEvent && e.nativeEvent.layout && e.nativeEvent.layout.height && heightFloating === 0) {
+    setHeightFloating(e.nativeEvent.layout.height);
+  }
+  },[heightFloating])
 
   const renderModalize = (
     <View
