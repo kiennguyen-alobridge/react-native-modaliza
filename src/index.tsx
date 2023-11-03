@@ -103,11 +103,11 @@ const ModalizeBase = (
 
     // Animations
     openAnimationConfig = {
-      timing: { duration: 240, easing: Easing.ease },
+      timing: { duration: 1240, easing: Easing.ease },
       spring: { speed: 14, bounciness: 4 },
     },
     closeAnimationConfig = {
-      timing: { duration: 240, easing: Easing.ease },
+      timing: { duration: 1240, easing: Easing.ease },
     },
     dragToss = 0.18,
     threshold = 120,
@@ -163,7 +163,7 @@ const ModalizeBase = (
   const [cancelClose, setCancelClose] = React.useState(false);
   const [layouts, setLayouts] = React.useState<Map<string, number>>(new Map());
   const [hideFloating, setHideFloating] = React.useState<boolean>(false);
-  const [touchY, setTouchY] = React.useState(0);
+  const [heightFloating, setHeightFloating] = React.useState<number>(0);
 
   const cancelTranslateY = React.useRef(new Animated.Value(1)).current; // 1 by default to have the translateY animation running
   const componentTranslateY = React.useRef(new Animated.Value(0)).current;
@@ -243,7 +243,6 @@ const ModalizeBase = (
     let toValue = 0;
     let toPanValue = 0;
     let newPosition: TPosition;
-
     if (dest === 'top') {
       toValue = 0;
     } else if (alwaysOpenValue) {
@@ -251,7 +250,6 @@ const ModalizeBase = (
     } else if (snapPoint) {
       toValue = (modalHeightValue || 0) - snapPoint;
     }
-
     if (panGestureAnimatedValue && (alwaysOpenValue || snapPoint)) {
       toPanValue = 0;
     } else if (
@@ -392,7 +390,7 @@ const ModalizeBase = (
           default: 0,
         }),
     );
-
+    console.log('handleModalizeContentLayout');
     setModalHeightValue(value);
   };
 
@@ -406,7 +404,7 @@ const ModalizeBase = (
     const maxFixed = +max.toFixed(3);
     const endHeightFixed = +endHeight.toFixed(3);
     const shorterHeight = maxFixed < endHeightFixed;
-
+    console.log('handleBaseLayout');
     setDisableScroll(shorterHeight && disableScrollIfPossible);
   };
 
@@ -425,7 +423,7 @@ const ModalizeBase = (
     if (!adjustToContentHeight) {
       return;
     }
-
+    console.log('handleContentLayout');
     handleBaseLayout('content', nativeEvent.layout.height);
   };
 
@@ -442,7 +440,7 @@ const ModalizeBase = (
     if (!adjustToContentHeight || absolute) {
       return;
     }
-
+    console.log('handleComponentLayout');
     handleBaseLayout(name, nativeEvent.layout.height);
   };
 
@@ -450,6 +448,8 @@ const ModalizeBase = (
     if (onClose) {
       onClose();
     }
+    console.log('handleClose');
+
     handleAnimateClose(dest, callback);
   };
 
@@ -468,11 +468,11 @@ const ModalizeBase = (
       ? (beginScrollYValue <= 20 && velocityY >= velocity) || thresholdProps
       : thresholdProps;
     let enableBouncesValue = true;
-
     // We make sure to reset the value if we are dragging from the children
     if (type !== 'component' && (cancelTranslateY as any)._value === 0) {
       componentTranslateY.setValue(0);
     }
+    // console.log('nativeEvent=======',nativeEvent.absoluteY-nativeEvent.y, fullHeight-snapPoint)
 
     /*
      * When the pan gesture began we check the position of the ScrollView "cursor".
@@ -639,8 +639,10 @@ const ModalizeBase = (
 
   const handleGestureEvent = Animated.event([{ nativeEvent: { translationY: dragY } }], {
     useNativeDriver: USE_NATIVE_DRIVER,
-    listener: ({ nativeEvent: { translationY } }: PanGestureHandlerStateChangeEvent) => {
-      if (snapPoint && translationY + touchY > fullHeight - snapPoint) {
+    listener: ({
+      nativeEvent: { translationY, y, absoluteY },
+    }: PanGestureHandlerStateChangeEvent) => {
+      if (snapPoint && absoluteY - y > fullHeight - snapPoint) {
         setHideFloating(true);
       } else {
         setHideFloating(false);
@@ -972,6 +974,21 @@ const ModalizeBase = (
     keyboardAvoidingViewProps.onLayout = handleModalizeContentLayout;
   }
 
+  const setHeightFloat = React.useCallback(
+    (e: LayoutChangeEvent) => {
+      if (
+        e &&
+        e.nativeEvent &&
+        e.nativeEvent.layout &&
+        e.nativeEvent.layout.height &&
+        heightFloating === 0
+      ) {
+        setHeightFloating(e.nativeEvent.layout.height);
+      }
+    },
+    [heightFloating],
+  );
+
   const renderModalize = (
     <View
       style={[s.modalize, rootStyle]}
@@ -982,7 +999,6 @@ const ModalizeBase = (
         maxDurationMs={tapGestureEnabled ? 100000 : 50}
         maxDeltaY={lastSnap}
         enabled={panGestureEnabled}
-        onBegan={e => setTouchY(Number(e.nativeEvent?.y || 0))}
       >
         <View style={s.modalize__wrapper} pointerEvents="box-none">
           {showContent && (
@@ -994,9 +1010,8 @@ const ModalizeBase = (
               {hideFloating && (
                 <View
                   style={{
-                    height: 50,
                     width: '100%',
-                    top: snapPoint ? snapPoint - 50 : 0,
+                    top: snapPoint ? snapPoint - heightFloating : 0,
                     position: 'absolute',
                     zIndex: 100,
                   }}
@@ -1008,8 +1023,8 @@ const ModalizeBase = (
           )}
           {!hideFloating && (
             <View
+              onLayout={setHeightFloat}
               style={{
-                height: 50,
                 width: '100%',
                 position: 'absolute',
                 bottom: 0,
