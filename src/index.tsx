@@ -162,7 +162,7 @@ const ModalizeBase = (
   const [modalPosition, setModalPosition] = React.useState<TPosition>('initial');
   const [cancelClose, setCancelClose] = React.useState(false);
   const [layouts, setLayouts] = React.useState<Map<string, number>>(new Map());
-  const [hideFloating, setHideFloating] = React.useState<boolean>(false);
+  const [hideFloating, setHideFloating] = React.useState<boolean>(true);
   const [heightFloating, setHeightFloating] = React.useState<number>(0);
 
   const cancelTranslateY = React.useRef(new Animated.Value(1)).current; // 1 by default to have the translateY animation running
@@ -817,9 +817,7 @@ const ModalizeBase = (
         activeOffsetX={ACTIVATED}
         onHandlerStateChange={handleChildren}
         onEnded={() => {
-          if (modalPosition && modalPosition === 'top') {
-            setHideFloating(false);
-          }
+          setHideFloating(false);
         }}
       >
         <Animated.View style={[style, childrenStyle]}>
