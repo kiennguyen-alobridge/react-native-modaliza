@@ -1,5 +1,13 @@
 import React, { useRef } from 'react';
-import { Text, View, TouchableOpacity, Animated, StyleSheet, Platform } from 'react-native';
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  Animated,
+  StyleSheet,
+  Platform,
+  SafeAreaView,
+} from 'react-native';
 import { Modalize } from 'react-native-modalize';
 
 const MyModalize = () => {
@@ -10,7 +18,7 @@ const MyModalize = () => {
   const onClose = () => {
     modalizeRef?.current?.close();
   };
-  const FooterScreen = () => {
+  const renderFloatingFooterComponent = () => {
     return (
       <View
         style={{
@@ -31,7 +39,7 @@ const MyModalize = () => {
   };
 
   return (
-    <View style={{ flex: 1, marginTop: 50 }}>
+    <SafeAreaView style={{ flex: 1 }}>
       <TouchableOpacity onPress={onOpen}>
         <Text> onOpen</Text>
       </TouchableOpacity>
@@ -42,21 +50,14 @@ const MyModalize = () => {
           showsVerticalScrollIndicator: false,
           scrollEnabled: false,
         }}
-        reactModalProps={{
-          onTouchMove: e => {
-            console.log('onTouchMove', e.nativeEvent.locationY);
-          },
-        }}
         {...(Platform.OS === 'android' && { panGestureComponentEnabled: true })}
         withHandle={false}
         closeModal={onClose}
         snapPoint={400}
-        // FooterComponent={renderFooterScreen}
-        // FloatingComponent={renderFooterScreen}
-        FloatingFooterComponent={FooterScreen}
+        FloatingFooterComponent={renderFloatingFooterComponent}
         useNativeDriver={true}
         tapGestureEnabled={false}
-        modalHeight={700}
+        modalHeight={750}
         closeSnapPointStraightEnabled={false}
         customRenderer={
           <Animated.View
@@ -72,7 +73,7 @@ const MyModalize = () => {
           </Animated.View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
